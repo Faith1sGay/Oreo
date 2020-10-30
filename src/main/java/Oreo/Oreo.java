@@ -32,21 +32,22 @@ public class Oreo {
         catnip.connect();
     }
 
+    @org.jetbrains.annotations.Nullable
+    @org.jetbrains.annotations.Contract(pure = true)
     private String deprefixify(String command) {
         for (String prefix : this.prefixes) {
             if (command.startsWith(prefix)) {
                 return prefix;
             }
         }
-        // sentinel value. we assume no blank prefix
-        return "";
+        return null;
     }
 
 
     private void handleMessage(Message message) {
         String prefix = deprefixify(message.content());
 
-        if (prefix.equals("")) return;
+        if (prefix == null) return;
 
         String command = message.content().substring(prefix.length());
 
