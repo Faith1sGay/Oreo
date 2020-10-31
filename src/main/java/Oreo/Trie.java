@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
-import com.koloboke.collect.impl.hash.Hash;
 import com.mewna.catnip.entity.message.Message;
 
 public class Trie {
