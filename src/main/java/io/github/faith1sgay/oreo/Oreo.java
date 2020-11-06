@@ -15,13 +15,14 @@ public class Oreo {
     private final Trie commands;
 
     public static void main(String[] args) {
-        String[] prefixes = {"~", "!", "~~"};
-        String token = "your token here";
+        String[] prefixes = {"~", "!", "~~", "oreo "};
+        String token = "";
 
         // example commands
         HashMap<String, Consumer<Context>> commands = new HashMap<>();
         commands.put("example", Oreo::example);
         commands.put("example test", Oreo::exampleTest);
+        commands.put("help", Oreo::help);
 
         Oreo bot = new Oreo(prefixes, token, new Trie(commands));
         bot.run();
@@ -36,6 +37,14 @@ public class Oreo {
                 "Prefix: " + context.prefix() + "\n" +
                 "Command: " + context.command() + "\n" +
                 "Arguments: " + context.arguments());
+    }
+    public static void help(@Nonnull Context context)
+    {
+        context.message().channel().sendMessage(
+                "Oreo help\n" +
+                        "example\n"+
+                        "exampleTest"
+        );
     }
 
     public Oreo(String[] prefixes, String token, Trie commands) {
