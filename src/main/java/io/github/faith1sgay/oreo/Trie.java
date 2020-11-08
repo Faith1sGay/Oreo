@@ -1,6 +1,7 @@
 package io.github.faith1sgay.oreo;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -40,49 +41,73 @@ public class Trie {
 
         HashMap<String, Trie> finalMap = new HashMap<>();
         for (Map.Entry<String, HashMap<String, Consumer<Context>>> entry : iteratedMap.entrySet()) {
-            finalMap.put(entry.getKey(), new Trie(entry.getValue()));
+            finalMap.put(entry.getKey().toLowerCase(), new Trie(entry.getValue()));
         }
 
         this.commands = Map.copyOf(finalMap);
     }
 
-    public void call(@Nonnull String command, @Nonnull Context context) {
+    @Nullable
+    public TrieContext search(@Nonnull String command) {
         if (command.equals("")) {
-            if (this.consumer != null) {
-                context.setArguments(command);
-                this.consumer.accept(context);
-            }
-            return;
+            return this.maybeReturnContext("", "");
         }
 
         String start = null;
+        int numberOfSpaces = 0;
         for (int i = 0; i < command.length(); i++) {
             if (command.charAt(i) == ' ') {
                 start = command.substring(0, i);
-                command = command.substring(i + 1);
-                break;
+                command = command.substring(i);
+                numberOfSpaces = this.nextNonSpace(command);
+                command = command.substring(numberOfSpaces);
             }
         }
         if (start == null) {
             start = command;
+            numberOfSpaces = 0;
             command = "";
         }
 
-        Trie nextTrie = this.commands.get(start);
+        Trie nextTrie = this.commands.get(start.toLowerCase());
+
         if (nextTrie == null) {
-            if (this.consumer != null) {
-                if (!command.equals("")) {
-                    context.setArguments(start + " " + command);
-                } else {
-                    context.setArguments(start);
-                }
-                this.consumer.accept(context);
-            }
-            return;
+            return this.maybeReturnContext(start, command);
         }
 
-        context.addCommand(start);
+        TrieContext nextResult = nextTrie.search(command);
+        if (nextResult == null) {
+            return this.maybeReturnContext(start, command);
+        }
 
-        nextTrie.call(command, context);
+        return nextResult.evolve(start, nSpaces(numberOfSpaces));
+    }
+
+    @Nonnull
+    private String nSpaces(int n) {
+        StringBuilder output = new StringBuilder();
+        while (n > 0) {
+            output.append(" ");
+            n--;
+        }
+        return output.toString();
+    }
+
+    @Nullable
+    private TrieContext maybeReturnContext(@Nonnull String command, @Nonnull String arguments) {
+        if (this.consumer == null) {
+            return null;
+        }
+
+        return new TrieContext(command, arguments, this.consumer);
+    }
+
+    private int nextNonSpace(String string) {
+        for (int i = 0; i < string.length(); i++) {
+            if (string.charAt(i) != ' ') {
+                return i;
+            }
+        }
+        return string.length(); // not really a sentinel but whatever...
     }
 }

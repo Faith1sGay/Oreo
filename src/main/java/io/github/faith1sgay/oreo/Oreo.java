@@ -21,7 +21,7 @@ public class Oreo {
         // example commands
         HashMap<String, Consumer<Context>> commands = new HashMap<>();
         commands.put("example", Oreo::example);
-        commands.put("example test", Oreo::exampleTest);
+        commands.put("example test test", Oreo::exampleTest);
         commands.put("help", Oreo::help);
 
         Oreo bot = new Oreo(prefixes, token, new Trie(commands));
@@ -79,9 +79,13 @@ public class Oreo {
         if (prefix == null) return;
 
         String command = message.content().substring(prefix.length());
-        Context context = new Context(prefix, "", "", message);
 
-        this.commands.call(command, context);
+        TrieContext commandContext = this.commands.search(command);
+        if (commandContext == null) {
+            return;
+        }
+
+        commandContext.consumer().accept(commandContext.evolve(prefix, message));
     }
 }
 
