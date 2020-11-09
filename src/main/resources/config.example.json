@@ -1,0 +1,4 @@
+{
+  "token": "your token here, get it from https://discord.com/developers/applications",
+  "prefixes": ["your", "prefixes"]
+}

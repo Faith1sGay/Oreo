@@ -3,11 +3,18 @@ package io.github.faith1sgay.oreo;
 import com.mewna.catnip.Catnip;
 import com.mewna.catnip.entity.message.Message;
 import com.mewna.catnip.shard.DiscordEvent;
+import com.grack.nanojson.JsonParser;
+import com.grack.nanojson.JsonParserException;
+import com.grack.nanojson.JsonObject;
+import com.grack.nanojson.JsonArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
+import java.io.InputStream;
 
 public class Oreo {
     private final List<String> prefixes;
@@ -15,8 +22,27 @@ public class Oreo {
     private final Trie commands;
 
     public static void main(String[] args) {
-        String[] prefixes = {"~", "!", "~~", "oreo "};
-        String token = "";
+        final Logger logger = LoggerFactory.getLogger("io.github.faith1sgay.oreo.Oreo");
+
+        // load configuration
+        InputStream configStream = Oreo.class.getResourceAsStream("/config.json");
+        if (configStream == null) {
+            logger.error("You need to fill out config.example.json and move it to config.json!");
+            return;
+        }
+
+        JsonObject config;
+        try {
+            config = JsonParser.object().from(configStream);
+        } catch (JsonParserException e) {
+            logger.error("Invalid config!", e);
+            return;
+        }
+
+        logger.info("Loaded configuration!");
+
+        String token = (String) config.get("token");
+        String[] prefixes = ((JsonArray) config.get("prefixes")).toArray(new String[0]);
 
         // example commands
         HashMap<String, Consumer<Context>> commands = new HashMap<>();
@@ -25,6 +51,8 @@ public class Oreo {
         commands.put("help", Oreo::help);
 
         Oreo bot = new Oreo(prefixes, token, new Trie(commands));
+        logger.info("Starting bot!");
+
         bot.run();
     }
 
