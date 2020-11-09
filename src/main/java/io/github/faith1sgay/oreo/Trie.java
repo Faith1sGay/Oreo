@@ -61,6 +61,7 @@ public class Trie {
                 command = command.substring(i);
                 numberOfSpaces = this.nextNonSpace(command);
                 command = command.substring(numberOfSpaces);
+                break;
             }
         }
         if (start == null) {
@@ -72,7 +73,11 @@ public class Trie {
         Trie nextTrie = this.commands.get(start.toLowerCase());
 
         if (nextTrie == null) {
-            return this.maybeReturnContext(start, command);
+            if (command.equals("")) {
+                return this.maybeReturnContext("", start);
+            } else {
+                return this.maybeReturnContext("", start + " " + command);
+            }
         }
 
         TrieContext nextResult = nextTrie.search(command);
