@@ -1,4 +1,5 @@
-.idea
+.idea/
 target/
+oreo-db/
 dependency-reduced-pom.xml
 src/main/resources/config.json

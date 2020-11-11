@@ -1,4 +1,4 @@
-FROM maven:3.6-jdk-12-slim AS BUILDER
+FROM maven:3.6-jdk-11-slim AS BUILDER
 WORKDIR /app
 COPY ./pom.xml /app
 RUN mvn -B -q dependency:go-offline
