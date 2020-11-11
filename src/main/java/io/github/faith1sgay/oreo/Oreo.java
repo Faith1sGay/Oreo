@@ -1,21 +1,27 @@
 package io.github.faith1sgay.oreo;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoCredential;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.*;
 import com.mewna.catnip.Catnip;
 import com.mewna.catnip.entity.message.Message;
+import com.mewna.catnip.entity.user.Presence;
 import com.mewna.catnip.shard.DiscordEvent;
 import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
 import com.grack.nanojson.JsonObject;
 import com.grack.nanojson.JsonArray;
+import com.mongodb.client.MongoClients;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.io.InputStream;
-
 public class Oreo {
     private final List<String> prefixes;
     private final Catnip catnip;
@@ -49,10 +55,10 @@ public class Oreo {
         commands.put("example", Oreo::example);
         commands.put("example test test", Oreo::exampleTest);
         commands.put("help", Oreo::help);
+        commands.put("mongoTest", Oreo::MongoTest);
 
         Oreo bot = new Oreo(prefixes, token, new Trie(commands));
         logger.info("Starting bot!");
-
         bot.run();
     }
 
@@ -65,6 +71,35 @@ public class Oreo {
                 "Prefix: " + context.prefix() + "\n" +
                 "Command: " + context.command() + "\n" +
                 "Arguments: " + context.arguments());
+    }
+    public static void MongoTest(@Nonnull Context context)
+    {
+        context.message().channel().sendMessage(
+                "Inserting into database..."
+        );
+        MongoCredential credential = MongoCredential.createCredential("root", "admin", "secret".toCharArray());
+        MongoClient mongoClient = MongoClients.create(
+                MongoClientSettings.builder()
+                        .applyToClusterSettings(builder ->
+                                builder.hosts(Arrays.asList(new ServerAddress("mongodb"))))
+                        .credential(credential)
+                        .build());
+        MongoDatabase database = mongoClient.getDatabase("Oreo");
+        MongoCollection<Document> collection = database.getCollection("Example");
+        Document doc = new Document("name", "MongoDB")
+                .append("type", "database")
+                .append("count", 1)
+                .append("versions", Arrays.asList("v3.2", "v3.0", "v2.6"))
+                .append("info", new Document("x", 203).append("y", 102));
+        try {
+            collection.insertOne(doc);
+            context.message().channel().sendMessage("Successfully inserted!");
+        }
+        catch (Exception e)
+        {
+            context.message().channel().sendMessage("OOPS, something went wrong: \n"+ e);
+        }
+
     }
     public static void help(@Nonnull Context context)
     {
@@ -83,6 +118,8 @@ public class Oreo {
         this.prefixes = prefixesList;
         this.commands = commands;
         this.catnip = Catnip.catnip(token);
+        Ready(catnip);
+
 
         catnip.observable(DiscordEvent.MESSAGE_CREATE).subscribe(this::handleMessage);
     }
@@ -100,8 +137,6 @@ public class Oreo {
         }
         return null;
     }
-
-
     private void handleMessage(@Nonnull Message message) {
         String prefix = deprefixify(message.content());
         if (prefix == null) return;
@@ -112,8 +147,14 @@ public class Oreo {
         if (commandContext == null) {
             return;
         }
-
         commandContext.consumer().accept(commandContext.evolve(prefix, message));
     }
+    private static void Ready(Catnip catnip) {
+        catnip.observable(DiscordEvent.READY).subscribe(ready -> {
+            catnip.presence(Presence.of(Presence.OnlineStatus.ONLINE, Presence.Activity.of("Milk's Favorite Cookie!", Presence.ActivityType.PLAYING)));
+        });
+    }
+
+
 }
 
