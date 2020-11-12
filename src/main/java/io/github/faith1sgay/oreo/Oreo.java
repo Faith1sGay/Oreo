@@ -1,6 +1,5 @@
 package io.github.faith1sgay.oreo;
 
-import com.mongodb.ConnectionString;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
@@ -138,16 +137,25 @@ public class Oreo {
         return null;
     }
     private void handleMessage(@Nonnull Message message) {
-        String prefix = deprefixify(message.content());
-        if (prefix == null) return;
+        String stringPrefix = deprefixify(message.content());
+        if (stringPrefix == null) return;
+
+        StringBuilder prefix = new StringBuilder(stringPrefix);
 
         String command = message.content().substring(prefix.length());
+
+        int i = 0;
+        while (command.charAt(i) == ' ') i++;
+        command = command.substring(i);
+        for (int j = 0; j < i; j++) {
+            prefix.append(" ");
+        }
 
         TrieContext commandContext = this.commands.search(command);
         if (commandContext == null) {
             return;
         }
-        commandContext.consumer().accept(commandContext.evolve(prefix, message));
+        commandContext.consumer().accept(commandContext.evolve(prefix.toString(), message));
     }
     private static void Ready(Catnip catnip) {
         catnip.observable(DiscordEvent.READY).subscribe(ready -> {
