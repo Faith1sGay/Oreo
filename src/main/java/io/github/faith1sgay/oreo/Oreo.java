@@ -62,18 +62,18 @@ public class Oreo {
     }
 
     public static void example(@Nonnull Context context) {
-        context.message().channel().sendMessage("Wow");
+        Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage("Wow");
     }
 
     public static void exampleTest(@Nonnull Context context) {
-        context.message().channel().sendMessage(
+        Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage(
                 "Prefix: " + context.prefix() + "\n" +
                 "Command: " + context.command() + "\n" +
                 "Arguments: " + context.arguments());
     }
     public static void MongoTest(@Nonnull Context context)
     {
-        context.message().channel().sendMessage(
+        Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage(
                 "Inserting into database..."
         );
         MongoCredential credential = MongoCredential.createCredential("root", "admin", "secret".toCharArray());
@@ -92,17 +92,17 @@ public class Oreo {
                 .append("info", new Document("x", 203).append("y", 102));
         try {
             collection.insertOne(doc);
-            context.message().channel().sendMessage("Successfully inserted!");
+            Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage("Successfully inserted!");
         }
         catch (Exception e)
         {
-            context.message().channel().sendMessage("OOPS, something went wrong: \n"+ e);
+            Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage("OOPS, something went wrong: \n"+ e);
         }
 
     }
     public static void help(@Nonnull Context context)
     {
-        context.message().channel().sendMessage(
+        Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage(
                 "Oreo help\n" +
                         "example\n"+
                         "exampleTest"
