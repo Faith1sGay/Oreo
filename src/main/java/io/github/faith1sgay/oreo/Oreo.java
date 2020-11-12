@@ -1,11 +1,11 @@
 package io.github.faith1sgay.oreo;
 
+import com.mewna.catnip.extension.AbstractExtension;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.*;
 import com.mewna.catnip.Catnip;
-import com.mewna.catnip.entity.message.Message;
 import com.mewna.catnip.entity.user.Presence;
 import com.mewna.catnip.shard.DiscordEvent;
 import com.grack.nanojson.JsonParser;
@@ -17,14 +17,11 @@ import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Consumer;
 import java.io.InputStream;
+
 public class Oreo {
-    private final List<String> prefixes;
     private final Catnip catnip;
-    private final Trie commands;
 
     public static void main(String[] args) {
         final Logger logger = LoggerFactory.getLogger("io.github.faith1sgay.oreo.Oreo");
@@ -47,18 +44,29 @@ public class Oreo {
         logger.info("Loaded configuration!");
 
         String token = (String) config.get("token");
-        String[] prefixes = ((JsonArray) config.get("prefixes")).toArray(new String[0]);
+        List<String> prefixes = Arrays.asList(((JsonArray) config.get("prefixes")).toArray(new String[0]));
 
         // example commands
-        HashMap<String, Consumer<Context>> commands = new HashMap<>();
-        commands.put("example", Oreo::example);
-        commands.put("example test test", Oreo::exampleTest);
-        commands.put("help", Oreo::help);
-        commands.put("mongoTest", Oreo::MongoTest);
+        CommandHandler commands = new CommandHandler(prefixes);
+        commands.register("example", Oreo::example);
+        commands.register("example test test", Oreo::exampleTest);
+        commands.register("help", Oreo::help);
+        commands.register("mongoTest", Oreo::MongoTest);
 
-        Oreo bot = new Oreo(prefixes, token, new Trie(commands));
+        Oreo bot = new Oreo(prefixes, token, commands);
         logger.info("Starting bot!");
         bot.run();
+    }
+
+    public Oreo(@Nonnull List<String> prefixes, @Nonnull String token, @Nonnull CommandHandler commands) {
+        prefixes.sort(Comparator.comparing(String::length));
+        Collections.reverse(prefixes);
+
+        this.catnip = Catnip.catnip(token);
+        Ready(catnip);
+
+        AbstractExtension commandsExtension = commands.toExtension();
+        catnip.loadExtension(commandsExtension);
     }
 
     public static void example(@Nonnull Context context) {
@@ -71,6 +79,7 @@ public class Oreo {
                 "Command: " + context.command() + "\n" +
                 "Arguments: " + context.arguments());
     }
+
     public static void MongoTest(@Nonnull Context context)
     {
         Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage(
@@ -100,6 +109,7 @@ public class Oreo {
         }
 
     }
+
     public static void help(@Nonnull Context context)
     {
         Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage(
@@ -109,60 +119,14 @@ public class Oreo {
         );
     }
 
-    public Oreo(String[] prefixes, String token, Trie commands) {
-        List<String> prefixesList = Arrays.asList(prefixes);
-        prefixesList.sort(Comparator.comparing(String::length));
-        Collections.reverse(prefixesList);
-
-        this.prefixes = prefixesList;
-        this.commands = commands;
-        this.catnip = Catnip.catnip(token);
-        Ready(catnip);
-
-
-        catnip.observable(DiscordEvent.MESSAGE_CREATE).subscribe(this::handleMessage);
-    }
-
     private void run() {
         catnip.connect();
     }
 
-    @Nullable
-    private String deprefixify(String command) {
-        for (String prefix : this.prefixes) {
-            if (command.startsWith(prefix)) {
-                return prefix;
-            }
-        }
-        return null;
-    }
-    private void handleMessage(@Nonnull Message message) {
-        String stringPrefix = deprefixify(message.content());
-        if (stringPrefix == null) return;
-
-        StringBuilder prefix = new StringBuilder(stringPrefix);
-
-        String command = message.content().substring(prefix.length());
-
-        int i = 0;
-        while (command.charAt(i) == ' ') i++;
-        command = command.substring(i);
-        for (int j = 0; j < i; j++) {
-            prefix.append(" ");
-        }
-
-        TrieContext commandContext = this.commands.search(command);
-        if (commandContext == null) {
-            return;
-        }
-        commandContext.consumer().accept(commandContext.evolve(prefix.toString(), message));
-    }
     private static void Ready(Catnip catnip) {
         catnip.observable(DiscordEvent.READY).subscribe(ready -> {
             catnip.presence(Presence.of(Presence.OnlineStatus.ONLINE, Presence.Activity.of("Milk's Favorite Cookie!", Presence.ActivityType.PLAYING)));
         });
     }
-
-
 }
 
