@@ -1,4 +1,4 @@
-package io.github.faith1sgay.oreo;
+package io.github.faith1sgay.oreo.command_handler;
 
 import com.mewna.catnip.entity.message.Message;
 import com.mewna.catnip.extension.AbstractExtension;

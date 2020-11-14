@@ -1,4 +1,4 @@
-package io.github.faith1sgay.oreo;
+package io.github.faith1sgay.oreo.command_handler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
