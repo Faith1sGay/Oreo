@@ -15,6 +15,7 @@ import com.grack.nanojson.JsonArray;
 import com.mongodb.client.MongoClients;
 import io.github.faith1sgay.oreo.command_handler.CommandHandler;
 import io.github.faith1sgay.oreo.command_handler.Context;
+import io.github.faith1sgay.oreo.verification.VerificationExtension;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,12 +56,18 @@ public class Oreo {
         commands.register("help", Oreo::help);
         commands.register("mongoTest", Oreo::MongoTest);
 
-        Oreo bot = new Oreo(prefixes, token, commands);
+        VerificationExtension verificationExtension = new VerificationExtension(config);
+
+        Oreo bot = new Oreo(prefixes, token, commands, verificationExtension);
         logger.info("Starting bot!");
         bot.run();
     }
 
-    public Oreo(@Nonnull List<String> prefixes, @Nonnull String token, @Nonnull CommandHandler commands) {
+    public Oreo(@Nonnull List<String> prefixes,
+                @Nonnull String token,
+                @Nonnull CommandHandler commands,
+                @Nonnull VerificationExtension verificationExtension
+    ) {
         prefixes.sort(Comparator.comparing(String::length));
         Collections.reverse(prefixes);
 
@@ -68,7 +75,7 @@ public class Oreo {
         Ready(catnip);
 
         AbstractExtension commandsExtension = commands.toExtension();
-        catnip.loadExtension(commandsExtension);
+        catnip.loadExtension(commandsExtension).loadExtension(verificationExtension);
     }
 
     public static void example(@Nonnull Context context) {

@@ -1,4 +1,9 @@
 {
   "token": "ToKen ",
-  "prefixes": ["oreo ", "~~", "~"]
+  "prefixes": ["oreo ", "~~", "~"],
+  "sandboxes": ["a channel id", "another channel id"],
+  "guilds": {
+    "a channel id": "that channel's guild id",
+    "another channel id": "perhaps the same guild id, who knows"
+  }
 }
