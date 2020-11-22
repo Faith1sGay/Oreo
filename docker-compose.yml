@@ -6,6 +6,8 @@ services:
       MONGO_USERNAME: root
       MONGO_PASSWORD: secret # change this
       MONGO_HOST: mongodb
+    depends_on:
+      - mongodb
   mongodb:
     image: mongo
     restart: always

@@ -26,7 +26,8 @@ public class CommandHandlerExtension extends AbstractExtension {
 
     @Override
     public Completable onLoaded() {
-        on(DiscordEvent.MESSAGE_CREATE, this::handleCommand);
+        observable(DiscordEvent.MESSAGE_CREATE)
+                .subscribe(this::handleCommand, Throwable::printStackTrace);
         return null;
     }
 
@@ -44,6 +45,7 @@ public class CommandHandlerExtension extends AbstractExtension {
         if (prefix == null) return;
 
         String command = message.content().substring(prefix.length());
+        if (command.equals("")) return;
 
         int i = 0;
         while (command.charAt(i) == ' ') i++;

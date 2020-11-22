@@ -50,11 +50,13 @@ public class Oreo {
         List<String> prefixes = Arrays.asList(((JsonArray) config.get("prefixes")).toArray(new String[0]));
 
         // example commands
+        NotesCommand notes = new NotesCommand();
         CommandHandler commands = new CommandHandler(prefixes);
         commands.register("example", Oreo::example);
         commands.register("example test test", Oreo::exampleTest);
         commands.register("help", Oreo::help);
         commands.register("mongoTest", Oreo::MongoTest);
+        commands.register("notes", notes::getNotes);
 
         VerificationExtension verificationExtension = new VerificationExtension(config);
 

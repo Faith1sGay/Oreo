@@ -3,16 +3,13 @@ package io.github.faith1sgay.oreo.verification;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.net.Authenticator;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.Duration;
 import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
 import com.grack.nanojson.JsonObject;
-import com.grack.nanojson.JsonArray;
 
 public class Sandbox {
     private final String id;
@@ -20,6 +17,7 @@ public class Sandbox {
     private final HttpClient httpClient;
     private String lastBotCommand;
     private String botPrefix;
+    private String botId;
 
     public Sandbox(String id, String guildId) {
         this.id = id;
@@ -42,6 +40,7 @@ public class Sandbox {
     public void newBot(String id) {
         this.lastBotCommand = null;
         this.botPrefix = null;
+        this.botId = id;
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://discord.bots.gg/api/v1/bots/" + id))
@@ -50,12 +49,18 @@ public class Sandbox {
 
         try {
             httpResponse = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
         }
 
         JsonObject response;
+        if (httpResponse == null) {
+            return;
+        }
 
         try {
             response = JsonParser.object().from(httpResponse.body());
@@ -91,5 +96,10 @@ public class Sandbox {
 
     public void botPrefix(@Nonnull String newPrefix) {
         this.botPrefix = newPrefix;
+    }
+
+    @Nonnull
+    public String botId() {
+        return this.botId;
     }
 }

@@ -8,20 +8,28 @@ import com.mewna.catnip.entity.message.Message;
 import com.mewna.catnip.entity.util.Permission;
 import com.mewna.catnip.extension.AbstractExtension;
 import com.mewna.catnip.shard.DiscordEvent;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
 import io.reactivex.rxjava3.core.Completable;
 import org.apache.commons.lang3.tuple.Pair;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 
 public class VerificationExtension extends AbstractExtension {
     // channel id to the sandbox.
     private final HashMap<String, Sandbox> sandboxes;
+    private final MongoClient mongoClient;
 
     public VerificationExtension(JsonObject configuration) {
         super("verification channel watcher");
@@ -29,6 +37,22 @@ public class VerificationExtension extends AbstractExtension {
                 ".verification_extension");
         String[] verificationChannels = ((JsonArray) configuration.get("sandboxes")).toArray(new String[0]);
         JsonObject relatedGuilds = configuration.getObject("guilds");
+
+        MongoCredential credential = MongoCredential.createCredential(
+                System.getenv("MONGO_USERNAME"),
+                "admin",
+                System.getenv("MONGO_PASSWORD").toCharArray()
+        );
+        this.mongoClient = MongoClients.create(
+                MongoClientSettings.builder()
+                        .applyToClusterSettings(builder ->
+                                builder.hosts(
+                                        Collections.singletonList(new ServerAddress(System.getenv("MONGO_HOST")))
+                                )
+                        )
+                        .credential(credential)
+                        .build()
+        );
 
         if (relatedGuilds == null) {
             logger.error("'guilds' config value is not set up.");
@@ -52,18 +76,18 @@ public class VerificationExtension extends AbstractExtension {
     @Override
     public Completable onLoaded() {
         observable(DiscordEvent.MESSAGE_CREATE)
-                .subscribe(this::updateLatestMsg);
+                .subscribe(this::updateLatestMsg, Throwable::printStackTrace);
         observable(DiscordEvent.MESSAGE_CREATE)
-                .subscribe(this::getNewNote);
+                .subscribe(this::getNewNote, Throwable::printStackTrace);
         observable(DiscordEvent.CHANNEL_UPDATE)
-                .subscribe(this::updateSandboxes);
+                .subscribe(this::updateSandboxes, Throwable::printStackTrace);
 
         return null;
     }
 
 
     private void getNewNote(Message message) {
-        // we aren't looking for any bot msgs
+        // we aren't looking for any bot messages
         Sandbox sandbox = this.sandboxes.get(message.channelId());
         if (message.author().bot()) return;
         if (sandbox == null) return;
@@ -95,8 +119,12 @@ public class VerificationExtension extends AbstractExtension {
             message.catnip().rest().channel().createMessage(message.channelId(), "Could you rerun the bot's " +
                     "command and set the note again?");
         } else {
-            message.catnip().rest().channel().createMessage(message.channelId(), note + "\n"
-                    + sandbox.lastBotCommand());
+            MongoCollection<Document> mongoCollection =
+                    this.mongoClient.getDatabase("Oreo").getCollection("notes");
+            Document noteDocument = new Document("bot_id", sandbox.botId())
+                    .append("note", note)
+                    .append("last_message", sandbox.lastBotCommand());
+            mongoCollection.insertOne(noteDocument);
         }
     }
 
@@ -133,7 +161,5 @@ public class VerificationExtension extends AbstractExtension {
         }
 
         sandbox.newBot(wantedOverride.id());
-        // sandbox.newBot("241930933962407936");
-        channel.asTextChannel().sendMessage(Objects.requireNonNull(sandbox.botPrefix()));
     }
 }
