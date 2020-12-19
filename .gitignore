@@ -4,3 +4,4 @@ oreo-db/
 dependency-reduced-pom.xml
 src/main/resources/config.json
 config.json
+oreo.iml
