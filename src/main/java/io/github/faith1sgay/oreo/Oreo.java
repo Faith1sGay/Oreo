@@ -1,13 +1,14 @@
 package io.github.faith1sgay.oreo;
 
+import com.mewna.catnip.CatnipOptions;
 import com.mewna.catnip.extension.AbstractExtension;
+import com.mewna.catnip.shard.GatewayIntent;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.*;
 import com.mewna.catnip.Catnip;
 import com.mewna.catnip.entity.user.Presence;
-import com.mewna.catnip.shard.DiscordEvent;
 import com.grack.nanojson.JsonParser;
 import com.grack.nanojson.JsonParserException;
 import com.grack.nanojson.JsonObject;
@@ -73,19 +74,20 @@ public class Oreo {
         prefixes.sort(Comparator.comparing(String::length));
         Collections.reverse(prefixes);
 
-        this.catnip = Catnip.catnip(token);
-        Ready(catnip);
+        this.catnip = Catnip.catnip(new CatnipOptions(token)
+                .intents(Set.of(GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILDS, GatewayIntent.GUILD_MESSAGE_REACTIONS))
+                .initialPresence(Presence.of(Presence.OnlineStatus.ONLINE, Presence.Activity.of("Milk's Favorite Cookie!", Presence.ActivityType.PLAYING))));
 
         AbstractExtension commandsExtension = commands.toExtension();
         catnip.loadExtension(commandsExtension).loadExtension(verificationExtension);
     }
 
     public static void example(@Nonnull Context context) {
-        Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage("Wow");
+        context.message().respond("Wow");
     }
 
     public static void exampleTest(@Nonnull Context context) {
-        Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage(
+        context.message().respond(
                 "Prefix: " + context.prefix() + "\n" +
                 "Command: " + context.command() + "\n" +
                 "Arguments: " + context.arguments());
@@ -93,7 +95,7 @@ public class Oreo {
 
     public static void MongoTest(@Nonnull Context context)
     {
-        Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage(
+        context.message().respond(
                 "Inserting into database..."
         );
         MongoCredential credential = MongoCredential.createCredential("root", "admin", "secret".toCharArray());
@@ -112,32 +114,27 @@ public class Oreo {
                 .append("info", new Document("x", 203).append("y", 102));
         try {
             collection.insertOne(doc);
-            Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage("Successfully inserted!");
+            context.message().respond("Successfully inserted!");
         }
         catch (Exception e)
         {
-            Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage("OOPS, something went wrong: \n"+ e);
+            context.message().respond("OOPS, something went wrong: \n"+ e);
         }
 
     }
 
     public static void help(@Nonnull Context context)
     {
-        Objects.requireNonNull(context.message().channel().blockingGet()).sendMessage(
+        context.message().respond(
                 "Oreo help\n" +
-                        "example\n"+
-                        "exampleTest"
+                        "example\n" +
+                        "exampleTest\n" +
+                        "notes <bot id>"
         );
     }
 
     private void run() {
         catnip.connect();
-    }
-
-    private static void Ready(Catnip catnip) {
-        catnip.observable(DiscordEvent.READY).subscribe(ready -> {
-            catnip.presence(Presence.of(Presence.OnlineStatus.ONLINE, Presence.Activity.of("Milk's Favorite Cookie!", Presence.ActivityType.PLAYING)));
-        });
     }
 }
 
