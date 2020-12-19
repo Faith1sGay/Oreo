@@ -14,8 +14,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>11</source>
-                    <target>11</target>
+                    <source>15</source>
+                    <target>15</target>
                 </configuration>
                 <version>3.6.1</version>
             </plugin>
@@ -34,6 +34,16 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <artifactSet>
                                 <excludes>
                                     <exclude>*:*:*:sources:*</exclude>
@@ -75,7 +85,7 @@
         <dependency>
             <groupId>com.mewna</groupId>
             <artifactId>catnip</artifactId>
-            <version>15639de</version>
+            <version>2b9268e</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>

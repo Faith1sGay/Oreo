@@ -11,6 +11,8 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import io.github.faith1sgay.oreo.command_handler.Context;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Observer;
+import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bson.Document;
 
@@ -48,7 +50,7 @@ public class NotesCommand {
 
         // the bot id will be the argument
         if (context.arguments().strip().equals("") || context.arguments().contains(" ")) {
-            context.message().reply("Usage: `" + context.prefix() + context.command() + " <bot id>`.");
+            context.message().respond("Usage: `" + context.prefix() + context.command() + " <bot id>`.");
             return;
         }
 
@@ -64,11 +66,11 @@ public class NotesCommand {
         int offset = result.getRight();
 
         if (result.getLeft().equals("")) {
-            context.message().reply("That bot has no notes set!");
+            context.message().respond("That bot has no notes set!");
             return;
         }
 
-        context.message().reply(result.getLeft()).subscribe(message -> {
+        context.message().respond(result.getLeft()).subscribe(message -> {
             NoteResponse responder = new NoteResponse(offset, properNotes, message);
             message.react("⏮️")
                     .subscribe(() -> message.react("⏭"));
@@ -86,7 +88,12 @@ public class NotesCommand {
                     .throttleLatest(1, TimeUnit.SECONDS)
                     // todo: figure out how to delete the reactions after this timeout expires.
                     .timeout(5, TimeUnit.MINUTES)
-                    .subscribe(responder::handleReaction, exception -> {});
+                    .subscribe(responder::handleReaction, exception -> {
+                        message.catnip().rest().channel()
+                                .deleteOwnReaction(message.channelId(), message.id(), "⏭")
+                                .subscribe(() -> message.catnip().rest().channel()
+                                        .deleteOwnReaction(message.channelId(), message.id(), "⏮️"));
+                    });
         });
 
     }

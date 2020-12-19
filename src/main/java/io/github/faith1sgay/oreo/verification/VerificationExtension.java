@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,12 +31,14 @@ public class VerificationExtension extends AbstractExtension {
     // channel id to the sandbox.
     private final HashMap<String, Sandbox> sandboxes;
     private final MongoClient mongoClient;
+    private final String[] ignoredIDs;
 
     public VerificationExtension(JsonObject configuration) {
         super("verification channel watcher");
         final Logger logger = LoggerFactory.getLogger("io.github.faith1sgay.oreo.verification" +
                 ".verification_extension");
         String[] verificationChannels = ((JsonArray) configuration.get("sandboxes")).toArray(new String[0]);
+        this.ignoredIDs = (((JsonArray) configuration.get("ignoredIDs")).toArray(new String[0]));
         JsonObject relatedGuilds = configuration.getObject("guilds");
 
         MongoCredential credential = MongoCredential.createCredential(
@@ -145,11 +148,11 @@ public class VerificationExtension extends AbstractExtension {
 
         PermissionOverride wantedOverride = null;
         for (PermissionOverride override : overrides) {
-            // we're looking for an override that only affects a user (a bot) and which allows sending + deleting.
+            // very dbots-specific. please don't ask why this works.
             if (override.type() == PermissionOverride.OverrideType.MEMBER &&
-                    override.allow().contains(Permission.SEND_MESSAGES) &&
-                    override.allow().contains(Permission.MANAGE_MESSAGES) &&
-                    override.allow().contains(Permission.VIEW_CHANNEL)) {
+                    override.allow().contains(Permission.VIEW_CHANNEL) &&
+                    !override.allow().contains(Permission.SEND_MESSAGES) &&
+                    Arrays.stream(this.ignoredIDs).noneMatch(x -> x.equals(override.id()))) {
                 wantedOverride = override;
                 break;
             }

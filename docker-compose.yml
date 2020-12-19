@@ -1,4 +1,6 @@
 version: '3'
+volumes:
+  oreo-db:
 services:
   oreo:
     build: .
@@ -15,4 +17,4 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: secret # change this too
     volumes:
-    - ./oreo-db:/data/db
+    - oreo-db:/data/db
