@@ -2,7 +2,7 @@ package io.github.faith1sgay.oreo.command_handler;
 
 
 import com.mewna.catnip.extension.AbstractExtension;
-
+import com.mewna.catnip.Catnip;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 public class CommandHandler {
     private final HashMap<String, Consumer<Context>> commands;
     private final List<String> prefixes;
-
     public CommandHandler(List<String> prefixes) {
         this.commands = new HashMap<>();
         this.prefixes = prefixes;
@@ -20,8 +19,9 @@ public class CommandHandler {
     public void register(String command, Consumer<Context> func) {
         this.commands.put(command, func);
     }
-
     public AbstractExtension toExtension() {
         return new CommandHandlerExtension(this.prefixes, this.commands);
+
     }
+
 }

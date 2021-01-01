@@ -76,7 +76,7 @@ public class Oreo {
 
         this.catnip = Catnip.catnip(new CatnipOptions(token)
                 .intents(Set.of(GatewayIntent.GUILD_MESSAGES, GatewayIntent.GUILDS, GatewayIntent.GUILD_MESSAGE_REACTIONS))
-                .initialPresence(Presence.of(Presence.OnlineStatus.ONLINE, Presence.Activity.of("Milk's Favorite Cookie!", Presence.ActivityType.PLAYING))));
+                .initialPresence(Presence.of(Presence.OnlineStatus.ONLINE, Presence.Activity.of("Milk Cookies", Presence.ActivityType.COMPETING))));
 
         AbstractExtension commandsExtension = commands.toExtension();
         catnip.loadExtension(commandsExtension).loadExtension(verificationExtension);
@@ -116,9 +116,8 @@ public class Oreo {
             collection.insertOne(doc);
             context.message().respond("Successfully inserted!");
         }
-        catch (Exception e)
-        {
-            context.message().respond("OOPS, something went wrong: \n"+ e);
+        catch (Exception e) {
+            context.message().respond("OOPS, something went wrong: \n" + e);
         }
 
     }

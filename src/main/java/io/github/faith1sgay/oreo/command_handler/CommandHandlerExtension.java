@@ -5,10 +5,8 @@ import com.mewna.catnip.extension.AbstractExtension;
 import com.mewna.catnip.shard.DiscordEvent;
 import io.reactivex.rxjava3.core.Completable;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import javax.annotation.Nonnull;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class CommandHandlerExtension extends AbstractExtension {
@@ -51,7 +49,17 @@ public class CommandHandlerExtension extends AbstractExtension {
         while (command.charAt(i) == ' ') i++;
         command = command.substring(i);
         prefix += " ".repeat(i);
+if (
+        message.author().bot()
+) return;
+if (message.content() == "Thanks oreo".toLowerCase()) {
+    String[] responses = {"Oh, uh.. np. Happy to help.", "Always welcome.", "What? You're thanking me?? Oh, it was nothing I guess.", "np qt", "No, thank ***you***", "Oh, no need to thank me, that's what bots are here for.", "For showing your appreciation, your life will be spared during the robot uprising.", "🍪🥛"};
+    List<String> responselist = Arrays.asList(responses);
+    Collections.shuffle(responselist);
+    responselist.toArray(responses);
+   message.respond(responses.toString());
 
+}
         TrieContext commandContext = this.commands.search(command);
         if (commandContext == null) {
             return;
